@@ -8,10 +8,10 @@
 #setwd("C:/Users/ghaid/Documents/training scripts/App-2/")
 
 
-# if (!require("BiocManager", quietly = TRUE))
-#   install.packages("BiocManager")
-# 
-# BiocManager::install("maftools")
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+ 
+BiocManager::install("maftools")
 #install.packages("DT")
 #install.packages("officer")
 #install.packages("flextable")
