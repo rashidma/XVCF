@@ -8,13 +8,30 @@ output:
 
 XVCF (eXplore VCF) is a tool for visualization and quality control of genetic variation data.
 
+## Dependencies
+XVCF is developed using R version 4.2.1 and requires following R packages:
+
+1. shiny
+2. vcfR
+3. reshape2
+4. ggplot2
+5. shinydashboard
+6. maftools
+7. tidyr
+8. readxl
+9. DT
+10. shinyjs
+
+Please take extra precautions while installing "maftools" Bioconductor package. It requires another Bioconductor package "Rhtslib" which in turn require "libcurl4-openssl-dev" in linux machines.
+
+
 ## Motive
 The premise behind developing "XVCF" shiny package is to pat the gap between
 heap of genomic data available and their corresponding
 visualization software/tool. 
 
 ## Solution
-We addressed this need timely and provided easy to use,light-weight, GUI-based tool for the scientific community less versed in
+We addressed this need timely and provided easy to use,light-weight, GUI-based tool specifically for those who are less versed in
 programming or computer skills.
 
 ## Methods
