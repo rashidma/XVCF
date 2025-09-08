@@ -24,6 +24,10 @@ XVCF is developed using R version 4.2.1 and requires following R packages:
 
 Please take extra precautions while installing "maftools" Bioconductor package. It requires another Bioconductor package "Rhtslib" which in turn require "libcurl4-openssl-dev" in linux machines.
 
+Tips: 
+1.  You keep versions of R and BiocManager up to date.
+2. When you update R please update your packages.
+3.  Install system-wide packages required by "Rhtslib" specially in Linux environment.
 
 ## Motive
 The premise behind developing "XVCF" shiny package is to pat the gap between
