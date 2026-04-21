@@ -1,17 +1,18 @@
 
-# Script to make a shiny app for VCFR and Maftool packages 
-# optional for cancer genoume  
+# XVCF R shiny app script 
+# Input mode 1: only raw VCF file [for germline data]
+# Input mode 2: ANNOVAR annotated VCF in Tabular Output
 #  10/11/2024 
-# 2ANNOVAR_output_for_Shiny_app.R
-# ANNOVAR output (tabular format) + clinical data
-#getwd()
-#setwd("C:/Users/ghaid/Documents/training scripts/App-2/")
+# Authors: Ghaida Almuneef & Mamoon Rashid
+# GitHub: https://github.com/rashidma/XVCF
+# PrePrint: https://www.biorxiv.org/content/10.1101/2025.04.30.651450v1
+#
 
 
 if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
  
-BiocManager::install("maftools")
+#BiocManager::install("maftools")
 #install.packages("DT")
 #install.packages("officer")
 #install.packages("flextable")
@@ -453,7 +454,7 @@ ui <- dashboardPage(
                 box(
                   tags$ul(
                     tags$li("Have questions or need to report an issue with the service? We've got you covered."),
-                    tags$li("Contact Us at this email : XVCF@7OMICS.com")
+                    tags$li("Contact Us at this email : rashidmamoon@gmail.com")
                   ),
                   width = 12
                 )
@@ -787,24 +788,58 @@ server <- function(input, output, session) {
     print(p)
   })
   
+  # output$downloadViolinPlot <- downloadHandler(
+  #   filename = function() {
+  #     "violin_plot_of_Read_depth.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     p <- ggplot(dpf_data(), aes(x = Sample, y = Depth)) +
+  #       geom_violin(fill = '#C0C0C0', adjust = 1.0, scale = 'count', trim = TRUE) +
+  #       theme_bw() +
+  #       ylab('Read Depth (DP)') +
+  #       theme(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
+  #       stat_summary(fun.data = mean_sdl, geom = 'pointrange', color = 'black') +
+  #       scale_y_continuous(trans = scales::log2_trans(), breaks = c(1, 10, 100, 1000))
+  #     print(p)
+  #     dev.off()
+  #   }
+  # )
+  
+  ##--
   output$downloadViolinPlot <- downloadHandler(
     filename = function() {
-      "violin_plot_of_Read_depth.png"  
+      "violin_plot_of_Read_depth.png"
     },
     content = function(file) {
-      png(file)
+      png(
+        filename = file,
+        width = 2400,     # pixels
+        height = 1800,    # pixels
+        units = "px",
+        res = 300         # high resolution (publication quality)
+      )
+      
       p <- ggplot(dpf_data(), aes(x = Sample, y = Depth)) +
         geom_violin(fill = '#C0C0C0', adjust = 1.0, scale = 'count', trim = TRUE) +
         theme_bw() +
         ylab('Read Depth (DP)') +
-        theme(axis.title.x = element_blank(), axis.text.x = element_text(angle = 60, hjust = 1)) +
+        theme(
+          axis.title.x = element_blank(),
+          axis.text.x = element_text(angle = 60, hjust = 1)
+        ) +
         stat_summary(fun.data = mean_sdl, geom = 'pointrange', color = 'black') +
-        scale_y_continuous(trans = scales::log2_trans(), breaks = c(1, 10, 100, 1000))
+        scale_y_continuous(
+          trans = scales::log2_trans(),
+          breaks = c(1, 10, 100, 1000)
+        )
+      
       print(p)
       dev.off()
     }
   )
-  
+ 
+  ###--
   
   # Sequence Depth (DP) box plot
   dp_data <- reactive({
@@ -820,19 +855,52 @@ server <- function(input, output, session) {
     abline(h = 10^c(0:4), lty = 3, col = "#808080")
   })
   
+  # output$downloadDPPlot <- downloadHandler(
+  #   filename = function() {
+  #     "boxplot_depth.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     boxplot(dp_data(), las = 2, col = 2:5, main = "Sequence Depth (DP)", log = "y")
+  #     abline(h = 10^c(0:4), lty = 3, col = "#808080")
+  #     dev.off()
+  #   }
+  # )
+  
+  ##-----------
+  
   output$downloadDPPlot <- downloadHandler(
     filename = function() {
-      "boxplot_depth.png"  
+      "boxplot_depth.png"
     },
     content = function(file) {
-      png(file)
-      boxplot(dp_data(), las = 2, col = 2:5, main = "Sequence Depth (DP)", log = "y")
+      png(
+        filename = file,
+        width = 2400,     # wide enough for many samples
+        height = 1800,
+        units = "px",
+        res = 300         # high resolution
+      )
+      # Improve margins for rotated labels
+      par(mar = c(10, 5, 4, 2))  
+      
+      boxplot(
+        dp_data(),
+        las = 2,                  # vertical labels
+        col = 2:5,
+        main = "Sequence Depth (DP)",
+        log = "y",
+        cex.axis = 1.2,           # clearer text
+        cex.lab = 1.4,
+        cex.main = 1.6
+      )
+      
       abline(h = 10^c(0:4), lty = 3, col = "#808080")
+      
       dev.off()
     }
   )
-  
-  
+  ##----------
   
   # genotype Plot 
   
@@ -854,21 +922,51 @@ server <- function(input, output, session) {
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1), axis.text.y = element_blank())
   })
   
+  # output$downloadGenotypePlot <- downloadHandler(
+  #   filename = function() {
+  #     "genotype_plot.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     ggplot(geno_data(), aes(x = Samples, fill = Genotypes)) +
+  #       geom_bar(position = "stack") +
+  #       labs(title = "Genotype Plot of All Samples", x = "Samples", y = "Variant") +
+  #       theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1), axis.text.y = element_blank())
+  #     dev.off()
+  #   }
+  # )
+  
+  ###---------
   output$downloadGenotypePlot <- downloadHandler(
     filename = function() {
-      "genotype_plot.png"  
+      "genotype_plot.png"
     },
     content = function(file) {
-      png(file)
-      ggplot(geno_data(), aes(x = Samples, fill = Genotypes)) +
+      
+      n <- length(unique(geno_data()$Samples))
+      
+      p <- ggplot(geno_data(), aes(x = Samples, fill = Genotypes)) +
         geom_bar(position = "stack") +
-        labs(title = "Genotype Plot of All Samples", x = "Samples", y = "Variant") +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1), axis.text.y = element_blank())
-      dev.off()
+        labs(
+          title = "Genotype Plot of All Samples",
+          x = "Samples",
+          y = "Variant"
+        ) +
+        theme(
+          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+          axis.text.y = element_blank()
+        )
+      
+      ggsave(
+        filename = file,
+        plot = p,
+        width = max(8, n * 0.3),  # inches, scales with samples
+        height = 6,
+        dpi = 300
+      )
     }
   )
-  
-  
+  ###---------
   # Genotype Quality plot
   gq_data <- reactive({
     req(vcf_data())
@@ -881,18 +979,51 @@ server <- function(input, output, session) {
     boxplot(gq_data(), las = 2, col = 2:5, main = "Genotype Quality (GQ)")
   })
   
+  # output$downloadGQPlot <- downloadHandler(
+  #   filename = function() {
+  #     "Genotype_Quality_plot.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     par(mar = c(8, 4, 4, 2))
+  #     boxplot(gq_data(), las = 2, col = 2:5, main = "Genotype Quality (GQ)")
+  #     dev.off()
+  #   }
+  # )
+  # 
+  ##------
   output$downloadGQPlot <- downloadHandler(
     filename = function() {
-      "Genotype_Quality_plot.png"  
+      "Genotype_Quality_plot.png"
     },
     content = function(file) {
-      png(file)
-      par(mar = c(8, 4, 4, 2))
-      boxplot(gq_data(), las = 2, col = 2:5, main = "Genotype Quality (GQ)")
+      
+      n <- ncol(gq_data())  # number of samples
+      
+      png(
+        filename = file,
+        width = max(2400, n * 120),  # scale width with samples
+        height = 1800,
+        units = "px",
+        res = 300
+      )
+      
+      par(mar = c(10, 5, 4, 2))  # extra space for rotated labels
+      
+      boxplot(
+        gq_data(),
+        las = 2,
+        col = 2:5,
+        main = "Genotype Quality (GQ)",
+        cex.axis = 1.2,
+        cex.lab = 1.4,
+        cex.main = 1.6
+      )
+      
       dev.off()
     }
   )
-  
+  ##------
   
   # DP heatmap plot
   heatmap_data <- reactive({
@@ -905,17 +1036,36 @@ server <- function(input, output, session) {
     heatmap.bp(heatmap_data()[1001:1500, ])
   })
   
+  # output$downloadHeatmapPlot <- downloadHandler(
+  #   filename = function() {
+  #     "RD_heatmap_plot.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     heatmap.bp(heatmap_data()[1001:1500, ])
+  #     dev.off()
+  #   }
+  # )
+  
+  ###
   output$downloadHeatmapPlot <- downloadHandler(
     filename = function() {
-      "RD_heatmap_plot.png"  
+      "RD_heatmap_plot.png"
     },
     content = function(file) {
-      png(file)
+      png(
+        filename = file,
+        width = 2400,
+        height = 1800,
+        units = "px",
+        res = 300
+      )
       heatmap.bp(heatmap_data()[1001:1500, ])
       dev.off()
     }
   )
   
+  ###
   
   #
   barplot_data <- reactive({
@@ -930,52 +1080,151 @@ server <- function(input, output, session) {
     barplot(apply(barplot_data(), MARGIN = 2, mean, na.rm = TRUE), las = 3)
   })
   
+  # output$downloadBarPlot <- downloadHandler(
+  #   filename = function() {
+  #     "Read_depth_bar_plot.png"
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     par(mar = c(8, 4, 4, 2))
+  #     barplot(apply(barplot_data(), MARGIN = 2, mean, na.rm = TRUE), las = 3)
+  #     dev.off()
+  #   }
+  # )
+  
+  ##---------
   output$downloadBarPlot <- downloadHandler(
     filename = function() {
       "Read_depth_bar_plot.png"
     },
     content = function(file) {
-      png(file)
-      par(mar = c(8, 4, 4, 2))
-      barplot(apply(barplot_data(), MARGIN = 2, mean, na.rm = TRUE), las = 3)
+      
+      means <- apply(barplot_data(), MARGIN = 2, mean, na.rm = TRUE)
+      n <- length(means)  # number of samples
+      
+      png(
+        filename = file,
+        width = max(2400, n * 120),  # scale width with sample count
+        height = 1800,
+        units = "px",
+        res = 300
+      )
+      
+      par(mar = c(10, 5, 4, 2))  # more room for rotated labels
+      
+      barplot(
+        means,
+        las = 3,                 # vertical labels
+        col = "steelblue",
+        main = "Mean Read Depth per Sample",
+        cex.names = 1.1,
+        cex.axis = 1.2,
+        cex.main = 1.6
+      )
+      
       dev.off()
     }
   )
+  ##---------
   #
   
+  # 
+  # chromo_data <- reactive({
+  #   req(vcf_data())
+  #   chrom <- create.chromR(name = "Chromosome 1", vcf = vcf_data(), seq = NULL, ann = NULL, verbose = TRUE)
+  #   chrom <- proc.chromR(chrom, verbose = TRUE)
+  #   chromoqc(chrom, dp.alpha = 22)
+  #   chrom
+  # })
+  # 
+  # 
+  # output$chromoplot <- renderPlot({
+  #   chromo_data()
+  # })
+  # 
+  # output$downloadChromoPlot <- downloadHandler(
+  #   filename = function() {
+  #     "Summarized_plot_of_Ch1.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     chromo_data()
+  #     dev.off()
+  #   }
+  # )
+  # 
   
+  ##------
   chromo_data <- reactive({
     req(vcf_data())
-    chrom <- create.chromR(name = "Chromosome 1", vcf = vcf_data(), seq = NULL, ann = NULL, verbose = TRUE)
-    chrom <- proc.chromR(chrom, verbose = TRUE)
-    chromoqc(chrom, dp.alpha = 22)
-    chrom
+    chrom <- create.chromR(
+      name = "Chromosome 1",
+      vcf = vcf_data(),
+      seq = NULL,
+      ann = NULL,
+      verbose = TRUE
+    )
+    proc.chromR(chrom, verbose = TRUE)
   })
   
- 
   output$chromoplot <- renderPlot({
-    chromo_data()
+    chromoqc(chromo_data(), dp.alpha = 22)
   })
   
   output$downloadChromoPlot <- downloadHandler(
     filename = function() {
-      "Summarized_plot_of_Ch1.png"  
+      "Summarized_plot_of_Ch1.png"
     },
     content = function(file) {
-      png(file)
-      chromo_data()
+      png(
+        filename = file,
+        width = 2400,
+        height = 1800,
+        units = "px",
+        res = 300
+      )
+      chromoqc(chromo_data(), dp.alpha = 22)
       dev.off()
     }
   )
+  ##------
+  # #
+  # chrom_data <- reactive({
+  #   req(vcf_data())
+  #   chrom <- create.chromR(name = "Chromosome 1", vcf = vcf_data(), seq = NULL, ann = NULL, verbose = TRUE)
+  #   # chrom <- masker(chrom, min_QUAL = 0, min_DP = 350, max_DP = 650, min_MQ = 59.5, max_MQ = 60.5)
+  #   chrom <- proc.chromR(chrom, verbose = TRUE)
+  #   chromoqc(chrom, dp.alpha = 22)
+  #   #chrom <- proc.chromR(chrom, verbose = FALSE, win.size = 1e3)
+  #   chrom
+  # })
+  # 
+  # output$chromplot <- renderPlot({
+  #   plot(chrom_data())
+  # })
+  # 
+  # output$downloadChromPlot <- downloadHandler(
+  #   filename = function() {
+  #     "qualit_ metrics_of_Ch1_plot.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     plot(chrom_data())
+  #     dev.off()
+  #   }
+  # )
   
-  #
+  ##-----
   chrom_data <- reactive({
     req(vcf_data())
-    chrom <- create.chromR(name = "Chromosome 1", vcf = vcf_data(), seq = NULL, ann = NULL, verbose = TRUE)
-    # chrom <- masker(chrom, min_QUAL = 0, min_DP = 350, max_DP = 650, min_MQ = 59.5, max_MQ = 60.5)
+    chrom <- create.chromR(
+      name = "Chromosome 1",
+      vcf = vcf_data(),
+      seq = NULL,
+      ann = NULL,
+      verbose = TRUE
+    )
     chrom <- proc.chromR(chrom, verbose = TRUE)
-    chromoqc(chrom, dp.alpha = 22)
-    #chrom <- proc.chromR(chrom, verbose = FALSE, win.size = 1e3)
     chrom
   })
   
@@ -985,15 +1234,21 @@ server <- function(input, output, session) {
   
   output$downloadChromPlot <- downloadHandler(
     filename = function() {
-      "qualit_ metrics_of_Ch1_plot.png"  
+      "quality_metrics_of_Ch1_plot.png"
     },
     content = function(file) {
-      png(file)
+      png(
+        filename = file,
+        width = 2400,
+        height = 1800,
+        units = "px",
+        res = 300
+      )
       plot(chrom_data())
       dev.off()
     }
   )
-  
+  ##-----
   
   # Allele Freq plot
   AlleleFreqplot <- reactive({
@@ -1032,17 +1287,41 @@ server <- function(input, output, session) {
   output$AlleleFreqplot <- renderPlot({
     plot(AlleleFreqplot())
   })
+  # output$downloadAlleleFreqPlot <- downloadHandler(
+  #   filename = function() {
+  #     "allele_frequency_plot.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     plot(AlleleFreqplot())
+  #     dev.off()
+  #   }
+  # )
+  
+  ##----
   output$downloadAlleleFreqPlot <- downloadHandler(
     filename = function() {
-      "allele_frequency_plot.png"  
+      "allele_frequency_plot.png"
     },
     content = function(file) {
-      png(file)
+      
+      # Optional: adapt width if many samples/points
+      n <- tryCatch(length(AlleleFreqplot()), error = function(e) NULL)
+      
+      png(
+        filename = file,
+        width = if (!is.null(n)) max(2400, n * 100) else 2400,
+        height = 1800,
+        units = "px",
+        res = 300
+      )
+      
       plot(AlleleFreqplot())
+      
       dev.off()
     }
   )
-  
+  ##----
   # Allele Freq Samples plot
   
   AlleleFreqSamplesplot <- reactive({
@@ -1081,17 +1360,34 @@ server <- function(input, output, session) {
   })
   
   # Add a download button for the plot
+  # output$downloadAlleleFreqSamplesplot <- downloadHandler(
+  #   filename = function() {
+  #     "allele_freq_samples_plot.png"
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     plot(AlleleFreqSamplesplot())
+  #     dev.off()
+  #   }
+  # )
+##-------
   output$downloadAlleleFreqSamplesplot <- downloadHandler(
     filename = function() {
       "allele_freq_samples_plot.png"
     },
     content = function(file) {
-      png(file)
+      png(
+        filename = file,
+        width = 2400,
+        height = 1800,
+        units = "px",
+        res = 300
+      )
       plot(AlleleFreqSamplesplot())
       dev.off()
     }
   )
-
+##-------  
   
   #########################################################################
   #                             ANNOVAR                                   ##
@@ -1277,17 +1573,50 @@ server <- function(input, output, session) {
     
   })
   
+  # output$downloadANNOVARsummary <- downloadHandler(
+  #   filename = function() {
+  #     "ANNOVAR_summary_plot.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+  #     plotmafSummary(maf = ball, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, showBarcodes = TRUE, titvRaw = FALSE)
+  #     dev.off()
+  #   }
+  # )
+  
+  ##-----
   output$downloadANNOVARsummary <- downloadHandler(
     filename = function() {
-      "ANNOVAR_summary_plot.png"  
+      "ANNOVAR_summary_plot.png"
     },
     content = function(file) {
-      png(file)
-      ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
-      plotmafSummary(maf = ball, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, showBarcodes = TRUE, titvRaw = FALSE)
+      png(
+        filename = file,
+        width = 2400,
+        height = 1800,
+        units = "px",
+        res = 300
+      )
+      
+      ball <- read.maf(
+        maf = ANNOVARsummary(),
+        clinicalData = clindata()
+      )
+      
+      plotmafSummary(
+        maf = ball,
+        rmOutlier = TRUE,
+        addStat = "median",
+        dashboard = TRUE,
+        showBarcodes = TRUE,
+        titvRaw = FALSE
+      )
+      
       dev.off()
     }
   )
+  ##-----
   
   ############################################################################
   
@@ -1355,41 +1684,99 @@ server <- function(input, output, session) {
   })
   
   ############
+  # 
+  # output$downloadOncoplot <- downloadHandler(
+  #   filename = function() {
+  #     "oncoplot.png"
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     #ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+  #     #oncoplot(maf = ball, top = 20, showTumorSampleBarcodes = TRUE) #, clinicalFeatures = c("Progression", "Gender"))
+  #     
+  #     # Read the MAF file with or without clinical data
+  #     clinical_data <- clindata() # May be NULL
+  #     ball <- read.maf(maf = ANNOVARsummary(), clinicalData = clinical_data)
+  #     
+  #     # Get selected clinical feature columns
+  #     selected_clndata1 <- input$clindata1
+  #     selected_clndata2 <- input$clindata2
+  #     
+  #     # To Ensure selected columns exist in clinicalData (if provided)
+  #     clinical_features <- if (!is.null(clindata()) &&
+  #                              !is.null(selected_clndata1) &&
+  #                              selected_clndata1 %in% colnames(clindata())) {
+  #       if (!is.null(selected_clndata2) && selected_clndata2 %in% colnames(clindata())) {
+  #         c(selected_clndata1, selected_clndata2) } else {  selected_clndata1  }  } else {   NULL  }
+  #     
+  #     # Generate the plot
+  #     if (is.null(clinical_features)) {
+  #       # Plot without clinical annotations
+  #       oncoplot(
+  #         maf = ball,
+  #         top = 20,
+  #         showTumorSampleBarcodes = TRUE
+  #       )
+  #     } else {
+  #       # Plot with clinical annotations
+  #       oncoplot(
+  #         maf = ball,
+  #         top = 20,
+  #         showTumorSampleBarcodes = TRUE,
+  #         clinicalFeatures = clinical_features
+  #       )
+  #     }
+  #      dev.off()
+  #   }
+  # )
+  # 
   
   output$downloadOncoplot <- downloadHandler(
     filename = function() {
       "oncoplot.png"
     },
     content = function(file) {
-      png(file)
-      #ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
-      #oncoplot(maf = ball, top = 20, showTumorSampleBarcodes = TRUE) #, clinicalFeatures = c("Progression", "Gender"))
+      clinical_data <- clindata()
+      ball <- read.maf(
+        maf = ANNOVARsummary(),
+        clinicalData = clinical_data
+      )
       
-      # Read the MAF file with or without clinical data
-      clinical_data <- clindata() # May be NULL
-      ball <- read.maf(maf = ANNOVARsummary(), clinicalData = clinical_data)
+      n_samples <- nrow(getSampleSummary(ball))
       
-      # Get selected clinical feature columns
+      png(
+        filename = file,
+        width = max(3200, n_samples * 80),
+        height = 2200,
+        units = "px",
+        res = 300
+      )
+      
       selected_clndata1 <- input$clindata1
       selected_clndata2 <- input$clindata2
       
-      # To Ensure selected columns exist in clinicalData (if provided)
-      clinical_features <- if (!is.null(clindata()) &&
-                               !is.null(selected_clndata1) &&
-                               selected_clndata1 %in% colnames(clindata())) {
-        if (!is.null(selected_clndata2) && selected_clndata2 %in% colnames(clindata())) {
-          c(selected_clndata1, selected_clndata2) } else {  selected_clndata1  }  } else {   NULL  }
+      clinical_features <- if (
+        !is.null(clinical_data) &&
+        !is.null(selected_clndata1) &&
+        selected_clndata1 %in% colnames(clinical_data)
+      ) {
+        if (!is.null(selected_clndata2) &&
+            selected_clndata2 %in% colnames(clinical_data)) {
+          c(selected_clndata1, selected_clndata2)
+        } else {
+          selected_clndata1
+        }
+      } else {
+        NULL
+      }
       
-      # Generate the plot
       if (is.null(clinical_features)) {
-        # Plot without clinical annotations
         oncoplot(
           maf = ball,
           top = 20,
           showTumorSampleBarcodes = TRUE
         )
       } else {
-        # Plot with clinical annotations
         oncoplot(
           maf = ball,
           top = 20,
@@ -1397,11 +1784,10 @@ server <- function(input, output, session) {
           clinicalFeatures = clinical_features
         )
       }
-       dev.off()
+      
+      dev.off()
     }
   )
-  
-  
   ########################## plot 3 ########################################
   output$plotTiTv <- renderPlot({
     
@@ -1414,21 +1800,55 @@ server <- function(input, output, session) {
     plotTiTv(res = ball.titv, showBarcodes = TRUE)
   })
   
+  # output$downloadTiTv <- downloadHandler(
+  #   filename = function() {
+  #     "plot_TiTv.png"
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+  #     
+  #     ball.titv = titv(maf = ball, plot = FALSE, useSyn = TRUE)
+  #     #plot titv summary
+  #     plotTiTv(res = ball.titv, showBarcodes = TRUE)
+  #     dev.off()
+  #   }
+  # )
+  
+  ##----
   output$downloadTiTv <- downloadHandler(
     filename = function() {
       "plot_TiTv.png"
     },
     content = function(file) {
-      png(file)
-      ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+      png(
+        filename = file,
+        width = 2800,
+        height = 2000,
+        units = "px",
+        res = 300
+      )
       
-      ball.titv = titv(maf = ball, plot = FALSE, useSyn = TRUE)
-      #plot titv summary
-      plotTiTv(res = ball.titv, showBarcodes = TRUE)
+      ball <- read.maf(
+        maf = ANNOVARsummary(),
+        clinicalData = clindata()
+      )
+      
+      ball.titv <- titv(
+        maf = ball,
+        plot = FALSE,
+        useSyn = TRUE
+      )
+      
+      plotTiTv(
+        res = ball.titv,
+        showBarcodes = TRUE
+      )
+      
       dev.off()
     }
   )
-  
+  ##----
   
   ########################## plot 4 ########################################
   # Dynamically update gene names choices
@@ -1469,33 +1889,75 @@ server <- function(input, output, session) {
   })
   
   # 
+  # output$downloadLollipopPlot <- downloadHandler(
+  #   filename = function() {
+  #     "lollipop_plot.png"
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #    
+  #     ball <- read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+  #     
+  #     # Get selected gene name
+  #     selected_gene <- input$genename
+  #     
+  #     # Check if selected gene name is not empty
+  #     if (!is.null(selected_gene)) {
+  #       
+  #       # lollipop plot
+  #       lollipopPlot(maf = ball, gene = selected_gene , AACol = 'aaChange', showMutationRate = TRUE)
+  #       
+  #     } else {
+  #       # If no gene name selected, show a message or default plot
+  #       plot(NULL, type = "n", xlab = "", ylab = "", main = "No gene selected")
+  #     }
+  #     dev.off()
+  #   }
+  # )
+  # 
+  
+  ##-------
   output$downloadLollipopPlot <- downloadHandler(
     filename = function() {
       "lollipop_plot.png"
     },
     content = function(file) {
-      png(file)
-     
-      ball <- read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+      png(
+        filename = file,
+        width = 2800,
+        height = 2000,
+        units = "px",
+        res = 300
+      )
       
-      # Get selected gene name
+      ball <- read.maf(
+        maf = ANNOVARsummary(),
+        clinicalData = clindata()
+      )
+      
       selected_gene <- input$genename
       
-      # Check if selected gene name is not empty
-      if (!is.null(selected_gene)) {
-        
-        # lollipop plot
-        lollipopPlot(maf = ball, gene = selected_gene , AACol = 'aaChange', showMutationRate = TRUE)
-        
+      if (!is.null(selected_gene) && nzchar(selected_gene)) {
+        lollipopPlot(
+          maf = ball,
+          gene = selected_gene,
+          AACol = "aaChange",
+          showMutationRate = TRUE
+        )
       } else {
-        # If no gene name selected, show a message or default plot
-        plot(NULL, type = "n", xlab = "", ylab = "", main = "No gene selected")
+        plot(
+          NULL,
+          type = "n",
+          xlab = "",
+          ylab = "",
+          main = "No gene selected"
+        )
       }
+      
       dev.off()
     }
   )
-  
-  
+  ##-------
   ########################## plot 5 ########################################
   
  # Dynamically update sample names choices
@@ -1532,31 +1994,74 @@ server <- function(input, output, session) {
 
   
   ################ 
+  # output$downloadRainfallPlot <- downloadHandler(
+  #   filename = function() {
+  #     "rainfall_plot.png"
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #   
+  #     # reading MAF file with clinical data
+  #     ball <- read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+  #     
+  #     # Get selected sample name
+  #     selected_sample <- input$sample_names
+  #     
+  #     # Check if selected sample name is not empty
+  #     if (!is.null(selected_sample)) {
+  #       # rainfall plot
+  #       rainfallPlot(maf = ball, tsb = selected_sample, detectChangePoints = TRUE, pointSize = 0.6)
+  #     } else {
+  #       # If no sample name selected, show a message or default plot
+  #       plot(NULL, type = "n", xlab = "", ylab = "", main = "No sample selected")
+  #     }
+  #     
+  #     dev.off()
+  #   }
+  # )
+  
+  ##---------
   output$downloadRainfallPlot <- downloadHandler(
     filename = function() {
       "rainfall_plot.png"
     },
     content = function(file) {
-      png(file)
-    
-      # reading MAF file with clinical data
-      ball <- read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+      png(
+        filename = file,
+        width = 2800,
+        height = 2000,
+        units = "px",
+        res = 300
+      )
       
-      # Get selected sample name
+      ball <- read.maf(
+        maf = ANNOVARsummary(),
+        clinicalData = clindata()
+      )
+      
       selected_sample <- input$sample_names
       
-      # Check if selected sample name is not empty
-      if (!is.null(selected_sample)) {
-        # rainfall plot
-        rainfallPlot(maf = ball, tsb = selected_sample, detectChangePoints = TRUE, pointSize = 0.6)
+      if (!is.null(selected_sample) && nzchar(selected_sample)) {
+        rainfallPlot(
+          maf = ball,
+          tsb = selected_sample,
+          detectChangePoints = TRUE,
+          pointSize = 0.6
+        )
       } else {
-        # If no sample name selected, show a message or default plot
-        plot(NULL, type = "n", xlab = "", ylab = "", main = "No sample selected")
+        plot(
+          NULL,
+          type = "n",
+          xlab = "",
+          ylab = "",
+          main = "No sample selected"
+        )
       }
       
       dev.off()
     }
   )
+  ##---------
   ########################## plot 6 ########################################
   # reactive cohortName
   cohortName <- reactive({
@@ -1580,19 +2085,48 @@ server <- function(input, output, session) {
     
   })
   
+  # output$downloadComparemutation <- downloadHandler(
+  #   filename = function() {
+  #     "Compare_mutation_plot.png"  
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+  #     ball.mutload = tcgaCompare(maf = ball, cohortName = cohortName())
+  #     
+  #     # plotVaf(maf = ball.mutload, vafCol = 'i_TumorVAF_WU')
+  #     dev.off()
+  #   }
+  # )
+  
+  ##--------
   output$downloadComparemutation <- downloadHandler(
     filename = function() {
-      "Compare_mutation_plot.png"  
+      "Compare_mutation_plot.png"
     },
     content = function(file) {
-      png(file)
-      ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
-      ball.mutload = tcgaCompare(maf = ball, cohortName = cohortName())
+      png(
+        filename = file,
+        width = 2800,
+        height = 2000,
+        units = "px",
+        res = 300
+      )
       
-      # plotVaf(maf = ball.mutload, vafCol = 'i_TumorVAF_WU')
+      ball <- read.maf(
+        maf = ANNOVARsummary(),
+        clinicalData = clindata()
+      )
+      
+      ball.mutload <- tcgaCompare(
+        maf = ball,
+        cohortName = cohortName()
+      )
+      
       dev.off()
     }
   )
+  ##--------
   ########################## plot 7 ########################################
   output$Pathways <- renderPlot({
     ## reading MAF file with clinical data
@@ -1603,19 +2137,45 @@ server <- function(input, output, session) {
   })
   
   
+  # output$downloadPathways <- downloadHandler(
+  #   filename = function() {
+  #     "Pathways_plot.png"
+  #   },
+  #   content = function(file) {
+  #     png(file)
+  #     
+  #     ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+  #     
+  #     OncogenicPathways(maf = ball)
+  #     dev.off()
+  #   }
+  # )
+  
+  ##------
   output$downloadPathways <- downloadHandler(
     filename = function() {
       "Pathways_plot.png"
     },
     content = function(file) {
-      png(file)
+      png(
+        filename = file,
+        width = 2800,
+        height = 2000,
+        units = "px",
+        res = 300
+      )
       
-      ball = read.maf(maf = ANNOVARsummary(), clinicalData = clindata())
+      ball <- read.maf(
+        maf = ANNOVARsummary(),
+        clinicalData = clindata()
+      )
       
       OncogenicPathways(maf = ball)
+      
       dev.off()
     }
   )
+  ##------
   
 }
 # Run the application
